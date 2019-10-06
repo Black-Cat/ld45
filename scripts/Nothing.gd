@@ -1,23 +1,38 @@
 extends RigidBody
 
+export(float) var transformation_time = 0.0
+var start_transformation_time = 0.0
+var mat
+var nothing_mat = preload('res://materials/Nothing.tres')
+
+export(bool) var full_nothing = false
 var drawing_force = false
 
 onready var force_line_scene = preload('res://scenes/ForceLine.tscn')
 var force_line
-
-onready var something_scene = preload('res://scenes/Something.tscn')
-var something
 
 func _ready():
 	force_line = force_line_scene.instance()
 	add_child(force_line)
 	force_line.visible = false
 
-	something = something_scene.instance()
-
-	connect('body_entered', self, 'on_body_entered')
+	if transformation_time > 0.0:
+		full_nothing = false
+		start_transformation_time = transformation_time
+		mat = get_child(0).get_surface_material(0)
+		mat = mat.duplicate()
+		get_child(0).set_surface_material(0, mat)
 
 func _process(delta):
+	if not full_nothing and transformation_time > 0.0:
+		transformation_time -= delta
+		mat.set_shader_param('mix_coef', 1.0 - (transformation_time / start_transformation_time))
+		full_nothing = transformation_time < 0.0
+		if full_nothing:
+			get_child(0).set_surface_material(0, nothing_mat)
+			for body in get_colliding_bodies():
+				body.emit_signal('body_entered', self)
+
 	if drawing_force:
 		var mouse_pos = get_viewport().get_mouse_position()
 		var pos = get_viewport().get_camera().unproject_position(get_transform().origin)
@@ -40,11 +55,3 @@ func _input_event(camera, event, click_position, click_normal, shape_idx):
 			mode = RigidBody.MODE_RIGID
 		drawing_force = event.pressed
 		force_line.visible = drawing_force
-
-func on_body_entered(body):
-	if not body is StaticBody:
-		return
-
-	get_parent().add_child(something)
-	something.transform = transform
-	queue_free()

@@ -1,0 +1,22 @@
+[gd_resource type="ShaderMaterial" load_steps=4 format=2]
+
+[ext_resource path="res://textures/something.png" type="Texture" id=1]
+[ext_resource path="res://textures/nothing.png" type="Texture" id=2]
+
+[sub_resource type="Shader" id=1]
+code = "shader_type spatial;
+
+uniform sampler2D first_texture;
+uniform sampler2D second_texture;
+uniform float mix_coef : hint_range(0.,1.);
+
+void fragment() {
+	ALBEDO = mix(texture(first_texture, UV), texture(second_texture, UV), mix_coef).xyz;
+}
+"
+
+[resource]
+shader = SubResource( 1 )
+shader_param/mix_coef = 0.0
+shader_param/first_texture = ExtResource( 1 )
+shader_param/second_texture = ExtResource( 2 )
