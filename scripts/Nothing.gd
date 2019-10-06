@@ -1,4 +1,5 @@
 extends RigidBody
+class_name Nothing
 
 export(float) var transformation_time = 0.0
 var start_transformation_time = 0.0
