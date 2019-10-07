@@ -1,22 +1,21 @@
 extends RigidBody
 class_name Nothing
 
+signal clicked
+
+var held = false
+
 export(float) var transformation_time = 0.0
 var start_transformation_time = 0.0
 var mat
 var nothing_mat = preload('res://materials/Nothing.tres')
 
 export(bool) var full_nothing = false
-var drawing_force = false
-
-onready var force_line_scene = preload('res://scenes/ForceLine.tscn')
-var force_line
+export(bool) var drag_n_drop = false
+var held_object = null
 
 func _ready():
-	force_line = force_line_scene.instance()
-	add_child(force_line)
-	force_line.visible = false
-
+	connect("clicked", self, "_on_pickable_clicked")
 	if transformation_time > 0.0:
 		full_nothing = false
 		start_transformation_time = transformation_time
@@ -34,25 +33,43 @@ func _process(delta):
 			for body in get_colliding_bodies():
 				body.emit_signal('body_entered', self)
 
-	if drawing_force:
-		var mouse_pos = get_viewport().get_mouse_position()
-		var pos = get_viewport().get_camera().unproject_position(get_transform().origin)
-		force_line.set_point_position(0, pos)
-		force_line.set_point_position(1, mouse_pos)
-		
-		# Apply force
-		var dir = force_line.get_point_position(1) - force_line.get_point_position(0)
-		add_central_force(Vector3(dir.x, -dir.y, 0.0))
+	if held:
+		var dropPlane  = Plane(Vector3(0, 0, 1), 0)
+		var position3D = dropPlane.intersects_ray(
+                             get_viewport().get_camera().project_ray_origin(get_viewport().get_mouse_position()),
+                             get_viewport().get_camera().project_ray_normal(get_viewport().get_mouse_position()))
+		global_transform.origin = position3D
 
-func _input(event):
-	if event is InputEventMouseButton and event.button_index == BUTTON_LEFT:
-		if not event.pressed:
-			drawing_force = false
-			force_line.visible = false
+
+func pickup():
+    if held:
+        return
+    mode = RigidBody.MODE_RIGID
+    held = true
+
+func drop(impulse):
+    if held:
+        mode = RigidBody.MODE_RIGID
+        add_central_force(impulse)
+        held = false
+
+func _on_pickable_clicked(object):
+	if !held_object:
+        held_object = object
+        held_object.pickup()
+
+func _unhandled_input(event):
+    if event is InputEventMouseButton and event.button_index == BUTTON_LEFT:
+        if held_object and !event.pressed:
+            held_object.drop(Vector3(Input.get_last_mouse_speed().x,Input.get_last_mouse_speed().y,0))
+            held_object = null
+            drag_n_drop = false
+            for body in get_colliding_bodies():
+              body.emit_signal('body_entered', self)
+            
 
 func _input_event(camera, event, click_position, click_normal, shape_idx):
 	if event is InputEventMouseButton and event.button_index == BUTTON_LEFT:
-		if mode != RigidBody.MODE_RIGID:
-			mode = RigidBody.MODE_RIGID
-		drawing_force = event.pressed
-		force_line.visible = drawing_force
+		if event.pressed:
+			emit_signal("clicked", self)
+			drag_n_drop = true

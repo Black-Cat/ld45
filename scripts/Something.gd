@@ -11,8 +11,12 @@ func on_body_entered(body):
 	if not 'full_nothing' in body:
 		return
 
+	if body.drag_n_drop:
+		return
+
 	if nothing == null or not body.full_nothing:
 		return
+
 
 	get_parent().add_child(nothing)
 	nothing.transform = transform
