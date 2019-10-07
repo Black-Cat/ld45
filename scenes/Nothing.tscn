@@ -20,9 +20,11 @@ surfaces/0 = {
 "vertex_count": 24
 }
 
-[sub_resource type="BoxShape" id=3]
+[sub_resource type="BoxShape" id=2]
 
-[node name="Nothing" type="RigidBody"]
+[node name="Nothing" type="RigidBody" groups=[
+"pickable",
+]]
 mode = 1
 continuous_cd = true
 contacts_reported = 2
@@ -32,9 +34,9 @@ script = ExtResource( 1 )
 full_nothing = true
 
 [node name="Cube" type="MeshInstance" parent="."]
-transform = Transform( 1, 0, 0, 0, -4.37114e-08, 1, 0, -1, -4.37114e-08, 0, 0, 0 )
+transform = Transform( 1, 0, 0, 0, -4.37114e-008, 1, 0, -1, -4.37114e-008, 0, 0, 0 )
 mesh = SubResource( 1 )
 material/0 = ExtResource( 3 )
 
 [node name="CollisionShape" type="CollisionShape" parent="."]
-shape = SubResource( 3 )
+shape = SubResource( 2 )
